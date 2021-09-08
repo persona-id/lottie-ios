@@ -6,7 +6,7 @@
 //
 
 import Foundation
-#if os(iOS) || os(tvOS) || os(watchOS)
+#if os(iOS) || os(tvOS) || os(watchOS) || targetEnvironment(macCatalyst)
 import UIKit
 
 /// An Objective-C compatible wrapper around Lottie's Animation class.
@@ -41,7 +41,7 @@ public final class CompatibleAnimation: NSObject {
 public final class CompatibleAnimationView: UIView {
 
   @objc
-  init(compatibleAnimation: CompatibleAnimation) {
+  public init(compatibleAnimation: CompatibleAnimation) {
     animationView = AnimationView(animation: compatibleAnimation.animation)
     self.compatibleAnimation = compatibleAnimation
     super.init(frame: .zero)
