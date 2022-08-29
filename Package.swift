@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "Lottie",
+  name: "PersonaLottie2",
   platforms: [.iOS("11.0"), .macOS("10.10"), .tvOS("11.0")],
-  products: [.library(name: "Lottie", targets: ["Lottie"])],
-  targets: [.target(name: "Lottie", path: "Sources")])
+  products: [.library(name: "PersonaLottie2", targets: ["PersonaLottie2"])],
+  targets: [.target(name: "PersonaLottie2", path: "Sources")])
