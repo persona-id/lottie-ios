@@ -12,7 +12,9 @@ let package = Package(
         .target(
             name: "PersonaLottie2",
             path: "lottie-swift/src",
-            exclude: ["Public/MacOS"]
+            exclude: ["Public/MacOS"],
+            resources: [.copy("../PrivacyInfo.xcprivacy")])
         )
     ]
 )
+      
