@@ -19,5 +19,11 @@ let package = Package(
         "Private/EmbeddedLibraries/EpoxyCore/README.md",
         "Private/EmbeddedLibraries/LRUCache/README.md",
       ],
-      resources: [.copy("PrivacyInfo.xcprivacy")]),
+      resources: [.copy("PrivacyInfo.xcprivacy")],
+      swiftSettings: [
+        // ConciseMagicFile (SE-0274): expand #file to "Module/File.swift" instead of the build
+        // machine's absolute path. Shrinks the compiled binary and keeps builder paths out of it.
+        // Default in Swift 6; enabled here since this package builds in the Swift 5 language mode.
+        .enableUpcomingFeature("ConciseMagicFile"),
+      ]),
   ])
