@@ -5,29 +5,22 @@
 //  Created by René Fouquet on 03.05.21.
 //
 
-#if canImport(UIKit)
 import UIKit
-#elseif canImport(AppKit)
-import AppKit
-#endif
+
+// MARK: - LottieAssetError
+
+enum LottieAssetError: Error {
+  /// Asset with this name was not found in the provided bundle.
+  case assetNotFound(name: String, bundle: Bundle?)
+}
 
 extension Data {
 
   init(assetName: String, in bundle: Bundle) throws {
-    #if canImport(UIKit)
     if let asset = NSDataAsset(name: assetName, bundle: bundle) {
       self = asset.data
-      return
     } else {
-      throw DotLottieError.assetNotFound(name: assetName, bundle: bundle)
+      throw LottieAssetError.assetNotFound(name: assetName, bundle: bundle)
     }
-    #else
-    if let asset = NSDataAsset(name: assetName, bundle: bundle) {
-      self = asset.data
-      return
-    } else {
-      throw DotLottieError.assetNotFound(name: assetName, bundle: bundle)
-    }
-    #endif
   }
 }
