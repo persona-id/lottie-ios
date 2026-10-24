@@ -5,9 +5,6 @@ final class DropShadowEffect: LayerEffect {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     try super.init(dictionary: dictionary)

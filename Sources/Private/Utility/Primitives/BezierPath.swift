@@ -283,85 +283,11 @@ struct BezierPath {
 
 }
 
-// MARK: Codable
+// MARK: CodingKeys
 
-extension BezierPath: Codable {
+extension BezierPath {
 
-  // MARK: Lifecycle
-
-  init(from decoder: Decoder) throws {
-    let container: KeyedDecodingContainer<BezierPath.CodingKeys>
-
-    if let keyedContainer = try? decoder.container(keyedBy: BezierPath.CodingKeys.self) {
-      container = keyedContainer
-    } else {
-      var unkeyedContainer = try decoder.unkeyedContainer()
-      container = try unkeyedContainer.nestedContainer(keyedBy: BezierPath.CodingKeys.self)
-    }
-
-    closed = try container.decodeIfPresent(Bool.self, forKey: .closed) ?? true
-
-    var vertexContainer = try container.nestedUnkeyedContainer(forKey: .vertices)
-    var inPointsContainer = try container.nestedUnkeyedContainer(forKey: .inPoints)
-    var outPointsContainer = try container.nestedUnkeyedContainer(forKey: .outPoints)
-
-    guard vertexContainer.count == inPointsContainer.count, inPointsContainer.count == outPointsContainer.count else {
-      /// Will throw an error if vertex, inpoints, and outpoints are not the same length.
-      /// This error is to be expected.
-      throw DecodingError.dataCorruptedError(
-        forKey: CodingKeys.vertices,
-        in: container,
-        debugDescription: "Vertex data does not match In Tangents and Out Tangents")
-    }
-
-    guard let count = vertexContainer.count, count > 0 else {
-      length = 0
-      elements = []
-      return
-    }
-
-    var decodedElements = [PathElement]()
-
-    /// Create first point
-    let firstVertex = CurveVertex(
-      point: try vertexContainer.decode(CGPoint.self),
-      inTangentRelative: try inPointsContainer.decode(CGPoint.self),
-      outTangentRelative: try outPointsContainer.decode(CGPoint.self))
-    var previousElement = PathElement(vertex: firstVertex)
-    decodedElements.append(previousElement)
-
-    var totalLength: CGFloat = 0
-    while !vertexContainer.isAtEnd {
-      /// Get the next vertex data.
-      let vertex = CurveVertex(
-        point: try vertexContainer.decode(CGPoint.self),
-        inTangentRelative: try inPointsContainer.decode(CGPoint.self),
-        outTangentRelative: try outPointsContainer.decode(CGPoint.self))
-      let pathElement = previousElement.pathElementTo(vertex)
-      decodedElements.append(pathElement)
-      previousElement = pathElement
-      totalLength = totalLength + pathElement.length
-    }
-    if closed {
-      // Don't use an out tangent for the closing point, since the
-      // closing point is exactly equal to the starting point.
-      let closeVertex = CurveVertex(
-        point: firstVertex.point,
-        inTangentRelative: firstVertex.inTangentRelative,
-        outTangentRelative: .zero)
-
-      let closeElement = previousElement.pathElementTo(closeVertex)
-      decodedElements.append(closeElement)
-      totalLength = totalLength + closeElement.length
-    }
-    length = totalLength
-    elements = decodedElements
-  }
-
-  // MARK: Internal
-
-  /// The BezierPath container is encoded and decoded from the JSON format
-  /// that defines points for a lottie animation.
+  /// The keys of the JSON format that defines points for a lottie animation.
   ///
   /// {
   /// "c" = Bool
@@ -369,31 +295,11 @@ extension BezierPath: Codable {
   /// "o" = [[Double]],
   /// "v" = [[Double]]
   /// }
-  ///
-
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case closed = "c"
     case inPoints = "i"
     case outPoints = "o"
     case vertices = "v"
-  }
-
-  func encode(to encoder: Encoder) throws {
-    var container = encoder.container(keyedBy: BezierPath.CodingKeys.self)
-    try container.encode(closed, forKey: .closed)
-
-    var vertexContainer = container.nestedUnkeyedContainer(forKey: .vertices)
-    var inPointsContainer = container.nestedUnkeyedContainer(forKey: .inPoints)
-    var outPointsContainer = container.nestedUnkeyedContainer(forKey: .outPoints)
-
-    /// If closed path, ignore the final element.
-    let finalIndex = closed ? elements.endIndex - 1 : elements.endIndex
-    for i in 0..<finalIndex {
-      let element = elements[i]
-      try vertexContainer.encode(element.vertex.point)
-      try inPointsContainer.encode(element.vertex.inTangentRelative)
-      try outPointsContainer.encode(element.vertex.outTangentRelative)
-    }
   }
 }
 

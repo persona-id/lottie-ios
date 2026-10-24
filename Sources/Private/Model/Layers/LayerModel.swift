@@ -5,35 +5,9 @@
 //  Created by Brandon Withrow on 1/7/19.
 //
 
-// MARK: - LayerType + ClassFamily
-
-/// Used for mapping a heterogeneous list to classes for parsing.
-extension LayerType: ClassFamily {
-  static var discriminator: Discriminator = .type
-
-  func getType() -> AnyObject.Type {
-    switch self {
-    case .precomp:
-      PreCompLayerModel.self
-    case .solid:
-      SolidLayerModel.self
-    case .image:
-      ImageLayerModel.self
-    case .null:
-      LayerModel.self
-    case .shape:
-      ShapeLayerModel.self
-    case .text:
-      TextLayerModel.self
-    case .unknown:
-      LayerModel.self
-    }
-  }
-}
-
 // MARK: - LayerType
 
-public enum LayerType: Int, Codable {
+public enum LayerType: Int {
   case precomp
   case solid
   case image
@@ -41,15 +15,11 @@ public enum LayerType: Int, Codable {
   case shape
   case text
   case unknown
-
-  public init(from decoder: Decoder) throws {
-    self = try LayerType(rawValue: decoder.singleValueContainer().decode(RawValue.self)) ?? .null
-  }
 }
 
 // MARK: - MatteType
 
-public enum MatteType: Int, Codable {
+public enum MatteType: Int {
   case none
   case add
   case invert
@@ -58,7 +28,7 @@ public enum MatteType: Int, Codable {
 
 // MARK: - BlendMode
 
-public enum BlendMode: Int, Codable {
+public enum BlendMode: Int {
   case normal
   case multiply
   case screen
@@ -80,29 +50,9 @@ public enum BlendMode: Int, Codable {
 // MARK: - LayerModel
 
 /// A base top container for shapes, images, and other view objects.
-class LayerModel: Codable, DictionaryInitializable {
+class LayerModel: DictionaryInitializable {
 
   // MARK: Lifecycle
-
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: LayerModel.CodingKeys.self)
-    name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Layer"
-    index = try container.decodeIfPresent(Int.self, forKey: .index) ?? .random(in: Int.min...Int.max)
-    type = try container.decode(LayerType.self, forKey: .type)
-    coordinateSpace = try container.decodeIfPresent(CoordinateSpace.self, forKey: .coordinateSpace) ?? .type2d
-    inFrame = try container.decode(Double.self, forKey: .inFrame)
-    outFrame = try container.decode(Double.self, forKey: .outFrame)
-    startTime = try container.decode(Double.self, forKey: .startTime)
-    transform = try container.decodeIfPresent(Transform.self, forKey: .transform) ?? .default
-    parent = try container.decodeIfPresent(Int.self, forKey: .parent)
-    blendMode = try container.decodeIfPresent(BlendMode.self, forKey: .blendMode) ?? .normal
-    masks = try container.decodeIfPresent([Mask].self, forKey: .masks)
-    timeStretch = try container.decodeIfPresent(Double.self, forKey: .timeStretch) ?? 1
-    matte = try container.decodeIfPresent(MatteType.self, forKey: .matte)
-    hidden = try container.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
-    styles = try container.decodeIfPresent([LayerStyle].self, ofFamily: LayerStyleType.self, forKey: .styles) ?? []
-    effects = try container.decodeIfPresent([LayerEffect].self, ofFamily: LayerEffectType.self, forKey: .effects) ?? []
-  }
 
   required init(dictionary: [String: Any]) throws {
     name = (try? dictionary.value(for: CodingKeys.name)) ?? "Layer"
@@ -211,7 +161,7 @@ class LayerModel: Codable, DictionaryInitializable {
 
   // MARK: Fileprivate
 
-  fileprivate enum CodingKeys: String, CodingKey {
+  fileprivate enum CodingKeys: String {
     case name = "nm"
     case index = "ind"
     case type = "ty"

@@ -6,7 +6,7 @@
 //
 
 /// A time marker
-final class Marker: Codable, Sendable, DictionaryInitializable {
+final class Marker: Sendable, DictionaryInitializable {
 
   // MARK: Lifecycle
 
@@ -18,7 +18,7 @@ final class Marker: Codable, Sendable, DictionaryInitializable {
 
   // MARK: Internal
 
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case name = "cm"
     case frameTime = "tm"
     case durationFrameTime = "dr"

@@ -7,7 +7,7 @@
 
 // MARK: - TextJustification
 
-enum TextJustification: Int, Codable {
+enum TextJustification: Int {
   case left
   case right
   case center
@@ -15,7 +15,7 @@ enum TextJustification: Int, Codable {
 
 // MARK: - TextDocument
 
-final class TextDocument: Codable, DictionaryInitializable, AnyInitializable {
+final class TextDocument: DictionaryInitializable, AnyInitializable {
 
   // MARK: Lifecycle
 
@@ -103,7 +103,7 @@ final class TextDocument: Codable, DictionaryInitializable, AnyInitializable {
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case text = "t"
     case fontSize = "s"
     case fontFamily = "f"

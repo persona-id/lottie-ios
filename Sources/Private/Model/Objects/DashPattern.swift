@@ -7,7 +7,7 @@
 
 // MARK: - DashElementType
 
-enum DashElementType: String, Codable {
+enum DashElementType: String {
   case offset = "o"
   case dash = "d"
   case gap = "g"
@@ -15,7 +15,7 @@ enum DashElementType: String, Codable {
 
 // MARK: - DashElement
 
-final class DashElement: Codable, DictionaryInitializable {
+final class DashElement: DictionaryInitializable {
 
   // MARK: Lifecycle
 
@@ -31,7 +31,7 @@ final class DashElement: Codable, DictionaryInitializable {
 
   // MARK: Internal
 
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case type = "n"
     case value = "v"
   }

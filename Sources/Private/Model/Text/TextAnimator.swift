@@ -7,47 +7,17 @@
 
 // MARK: - TextRangeUnit
 
-enum TextRangeUnit: Int, RawRepresentable, Codable {
+enum TextRangeUnit: Int, RawRepresentable {
   case percentage = 1
   case index = 2
 }
 
 // MARK: - TextAnimator
 
-final class TextAnimator: Codable, DictionaryInitializable {
+final class TextAnimator: DictionaryInitializable {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: TextAnimator.CodingKeys.self)
-    name = try container.decodeIfPresent(String.self, forKey: .name) ?? ""
-
-    let animatorContainer = try container.nestedContainer(keyedBy: TextAnimatorKeys.self, forKey: .textAnimator)
-    fillColor = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieColor>.self, forKey: .fillColor)
-    strokeColor = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieColor>.self, forKey: .strokeColor)
-    strokeWidth = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .strokeWidth)
-    tracking = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .tracking)
-    anchor = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector3D>.self, forKey: .anchor)
-    position = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector3D>.self, forKey: .position)
-    scale = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector3D>.self, forKey: .scale)
-    skew = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .skew)
-    skewAxis = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .skewAxis)
-    rotationX = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotationX)
-    rotationY = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotationY)
-    if let rotation = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotation) {
-      rotationZ = rotation
-    } else if let rotation = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotationZ) {
-      rotationZ = rotation
-    } else {
-      rotationZ = nil
-    }
-    opacity = try animatorContainer.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .opacity)
-
-    let selectorContainer = try? container.nestedContainer(keyedBy: TextSelectorKeys.self, forKey: .textSelector)
-    start = try? selectorContainer?.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .start)
-    end = try? selectorContainer?.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .end)
-    textRangeUnit = try? selectorContainer?.decodeIfPresent(TextRangeUnit.self, forKey: .textRangeUnits)
-  }
 
   init(dictionary: [String: Any]) throws {
     name = (try? dictionary.value(for: CodingKeys.name)) ?? ""
@@ -197,31 +167,23 @@ final class TextAnimator: Codable, DictionaryInitializable {
   /// The type of unit used by the start/end ranges
   let textRangeUnit: TextRangeUnit?
 
-  func encode(to encoder: Encoder) throws {
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    var animatorContainer = container.nestedContainer(keyedBy: TextAnimatorKeys.self, forKey: .textAnimator)
-    try animatorContainer.encodeIfPresent(fillColor, forKey: .fillColor)
-    try animatorContainer.encodeIfPresent(strokeColor, forKey: .strokeColor)
-    try animatorContainer.encodeIfPresent(strokeWidth, forKey: .strokeWidth)
-    try animatorContainer.encodeIfPresent(tracking, forKey: .tracking)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case textSelector = "s"
     case textAnimator = "a"
     case name = "nm"
   }
 
-  private enum TextSelectorKeys: String, CodingKey {
+  private enum TextSelectorKeys: String {
     case start = "s"
     case end = "e"
     case offset = "o"
     case textRangeUnits = "r"
   }
 
-  private enum TextAnimatorKeys: String, CodingKey {
+  private enum TextAnimatorKeys: String {
     case fillColor = "fc"
     case strokeColor = "sc"
     case strokeWidth = "sw"

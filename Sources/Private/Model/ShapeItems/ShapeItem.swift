@@ -7,7 +7,7 @@
 
 // MARK: - ShapeType
 
-enum ShapeType: String, Codable, Sendable {
+enum ShapeType: String, Sendable {
   case ellipse = "el"
   case fill = "fl"
   case gradientFill = "gf"
@@ -23,67 +23,15 @@ enum ShapeType: String, Codable, Sendable {
   case trim = "tm"
   case transform = "tr"
   case unknown
-
-  public init(from decoder: Decoder) throws {
-    self = try ShapeType(rawValue: decoder.singleValueContainer().decode(RawValue.self)) ?? .unknown
-  }
 }
 
-// MARK: ClassFamily
-
-extension ShapeType: ClassFamily {
-
-  static var discriminator: Discriminator = .type
-
-  func getType() -> AnyObject.Type {
-    switch self {
-    case .ellipse:
-      Ellipse.self
-    case .fill:
-      Fill.self
-    case .gradientFill:
-      GradientFill.self
-    case .group:
-      Group.self
-    case .gradientStroke:
-      GradientStroke.self
-    case .merge:
-      Merge.self
-    case .rectangle:
-      Rectangle.self
-    case .repeater:
-      Repeater.self
-    case .round:
-      RoundedCorners.self
-    case .shape:
-      Shape.self
-    case .star:
-      Star.self
-    case .stroke:
-      Stroke.self
-    case .trim:
-      Trim.self
-    case .transform:
-      ShapeTransform.self
-    default:
-      ShapeItem.self
-    }
-  }
-}
 
 // MARK: - ShapeItem
 
 /// An item belonging to a Shape Layer
-class ShapeItem: Codable, DictionaryInitializable {
+class ShapeItem: DictionaryInitializable {
 
   // MARK: Lifecycle
-
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: ShapeItem.CodingKeys.self)
-    name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Layer"
-    type = try container.decode(ShapeType.self, forKey: .type)
-    hidden = try container.decodeIfPresent(Bool.self, forKey: .hidden) ?? false
-  }
 
   required init(dictionary: [String: Any]) throws {
     name = (try? dictionary.value(for: CodingKeys.name)) ?? "Layer"
@@ -113,7 +61,7 @@ class ShapeItem: Codable, DictionaryInitializable {
 
   // MARK: Fileprivate
 
-  fileprivate enum CodingKeys: String, CodingKey {
+  fileprivate enum CodingKeys: String {
     case name = "nm"
     case type = "ty"
     case hidden = "hd"

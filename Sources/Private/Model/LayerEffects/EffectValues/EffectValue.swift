@@ -4,48 +4,18 @@
 // MARK: - EffectValueType
 
 /// https://lottiefiles.github.io/lottie-docs/schema/#/$defs/effect-values
-enum EffectValueType: Int, Codable, Sendable {
+enum EffectValueType: Int, Sendable {
   case slider = 0
   case angle = 1
   case color = 2
   case unknown = 9999
-
-  init(from decoder: Decoder) throws {
-    self = try EffectValueType(rawValue: decoder.singleValueContainer().decode(RawValue.self)) ?? .unknown
-  }
-}
-
-// MARK: ClassFamily
-
-extension EffectValueType: ClassFamily {
-  static var discriminator: Discriminator = .type
-
-  func getType() -> AnyObject.Type {
-    switch self {
-    case .slider:
-      Vector1DEffectValue.self
-    case .angle:
-      Vector1DEffectValue.self
-    case .color:
-      ColorEffectValue.self
-    case .unknown:
-      // Unsupported
-      LayerEffect.self
-    }
-  }
 }
 
 // MARK: - EffectValue
 
-class EffectValue: Codable, DictionaryInitializable {
+class EffectValue: DictionaryInitializable {
 
   // MARK: Lifecycle
-
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: EffectValue.CodingKeys.self)
-    type = try container.decode(EffectValueType.self, forKey: .type)
-    name = try container.decode(String.self, forKey: .name)
-  }
 
   required init(dictionary: [String: Any]) throws {
     type = (try? dictionary.value(for: CodingKeys.type)).flatMap(EffectValueType.init(rawValue:)) ?? .unknown
@@ -62,7 +32,7 @@ class EffectValue: Codable, DictionaryInitializable {
 
   // MARK: Fileprivate
 
-  fileprivate enum CodingKeys: String, CodingKey {
+  fileprivate enum CodingKeys: String {
     case type = "ty"
     case name = "nm"
   }

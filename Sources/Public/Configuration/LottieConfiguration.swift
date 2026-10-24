@@ -9,11 +9,9 @@ public struct LottieConfiguration: Hashable {
   // MARK: Lifecycle
 
   public init(
-    decodingStrategy: DecodingStrategy = .dictionaryBased,
     colorSpace: CGColorSpace = CGColorSpaceCreateDeviceRGB(),
     reducedMotionOption: ReducedMotionOption = .systemReducedMotionToggle)
   {
-    self.decodingStrategy = decodingStrategy
     self.colorSpace = colorSpace
     self.reducedMotionOption = reducedMotionOption
   }
@@ -23,9 +21,6 @@ public struct LottieConfiguration: Hashable {
   /// The global configuration of Lottie,
   /// which applies to all `LottieAnimationView`s by default.
   public static var shared = LottieConfiguration()
-
-  /// The decoding implementation to use when parsing an animation JSON file
-  public var decodingStrategy: DecodingStrategy
 
   /// Options for controlling animation behavior in response to user / system "reduced motion" configuration.
   ///  - Defaults to `ReducedMotionOption.systemReducedMotionToggle`, which returns `.reducedMotion`

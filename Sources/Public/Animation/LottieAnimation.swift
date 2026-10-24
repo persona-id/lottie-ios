@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - CoordinateSpace
 
-public enum CoordinateSpace: Int, Codable, Sendable {
+public enum CoordinateSpace: Int, Sendable {
   case type2d
   case type3d
 }
@@ -19,36 +19,10 @@ public enum CoordinateSpace: Int, Codable, Sendable {
 /// The `LottieAnimation` model is the top level model object in Lottie.
 ///
 /// A `LottieAnimation` holds all of the animation data backing a Lottie Animation.
-/// Codable, see JSON schema [here](https://github.com/airbnb/lottie-web/tree/master/docs/json).
-public final class LottieAnimation: Codable, Sendable, DictionaryInitializable {
+/// Decode one with `LottieAnimation.from(data:)`. See JSON schema [here](https://github.com/airbnb/lottie-web/tree/master/docs/json).
+public final class LottieAnimation: Sendable, DictionaryInitializable {
 
   // MARK: Lifecycle
-
-  required public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: LottieAnimation.CodingKeys.self)
-    version = try container.decode(String.self, forKey: .version)
-    type = try container.decodeIfPresent(CoordinateSpace.self, forKey: .type) ?? .type2d
-    startFrame = try container.decode(AnimationFrameTime.self, forKey: .startFrame)
-    endFrame = try container.decode(AnimationFrameTime.self, forKey: .endFrame)
-    framerate = try container.decode(Double.self, forKey: .framerate)
-    width = try container.decode(Double.self, forKey: .width)
-    height = try container.decode(Double.self, forKey: .height)
-    layers = try container.decode([LayerModel].self, ofFamily: LayerType.self, forKey: .layers)
-    glyphs = try container.decodeIfPresent([Glyph].self, forKey: .glyphs)
-    fonts = try container.decodeIfPresent(FontList.self, forKey: .fonts)
-    assetLibrary = try container.decodeIfPresent(AssetLibrary.self, forKey: .assetLibrary)
-    markers = try container.decodeIfPresent([Marker].self, forKey: .markers)
-
-    if let markers {
-      var markerMap: [String: Marker] = [:]
-      for marker in markers {
-        markerMap[marker.name] = marker
-      }
-      self.markerMap = markerMap
-    } else {
-      markerMap = nil
-    }
-  }
 
   public init(dictionary: [String: Any]) throws {
     version = try dictionary.value(for: CodingKeys.version)
@@ -115,7 +89,7 @@ public final class LottieAnimation: Codable, Sendable, DictionaryInitializable {
 
   // MARK: Internal
 
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case version = "v"
     case type = "ddd"
     case startFrame = "ip"

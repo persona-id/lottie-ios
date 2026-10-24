@@ -7,7 +7,7 @@
 
 // MARK: - TrimType
 
-enum TrimType: Int, Codable {
+enum TrimType: Int {
   case simultaneously = 1
   case individually = 2
 }
@@ -18,14 +18,6 @@ final class Trim: ShapeItem {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Trim.CodingKeys.self)
-    start = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .start)
-    end = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .end)
-    offset = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .offset)
-    trimType = try container.decode(TrimType.self, forKey: .trimType)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     let startDictionary: [String: Any] = try dictionary.value(for: CodingKeys.start)
@@ -63,18 +55,10 @@ final class Trim: ShapeItem {
       && end.keyframes[0].value.value == 100
   }
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(start, forKey: .start)
-    try container.encode(end, forKey: .end)
-    try container.encode(offset, forKey: .offset)
-    try container.encode(trimType, forKey: .trimType)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case start = "s"
     case end = "e"
     case offset = "o"
