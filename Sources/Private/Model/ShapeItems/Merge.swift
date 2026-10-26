@@ -7,7 +7,7 @@
 
 // MARK: - MergeMode
 
-enum MergeMode: Int, Codable, Sendable {
+enum MergeMode: Int, Sendable {
   case none
   case merge
   case add
@@ -22,11 +22,6 @@ final class Merge: ShapeItem {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Merge.CodingKeys.self)
-    mode = try container.decode(MergeMode.self, forKey: .mode)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     let modeRawType: Int = try dictionary.value(for: CodingKeys.mode)
@@ -42,15 +37,10 @@ final class Merge: ShapeItem {
   /// The mode of the merge path
   let mode: MergeMode
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(mode, forKey: .mode)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case mode = "mm"
   }
 }

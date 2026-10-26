@@ -7,62 +7,6 @@
 
 import CoreGraphics
 
-// MARK: - LottieColor + Codable
-
-extension LottieColor: Codable {
-
-  // MARK: Lifecycle
-
-  public init(from decoder: Decoder) throws {
-    var container = try decoder.unkeyedContainer()
-
-    var r1: Double =
-      if !container.isAtEnd {
-        try container.decode(Double.self)
-      } else {
-        0
-      }
-
-    var g1: Double =
-      if !container.isAtEnd {
-        try container.decode(Double.self)
-      } else {
-        0
-      }
-
-    var b1: Double =
-      if !container.isAtEnd {
-        try container.decode(Double.self)
-      } else {
-        0
-      }
-
-    if r1 > 1, g1 > 1, b1 > 1 {
-      r1 = r1 / 255
-      g1 = g1 / 255
-      b1 = b1 / 255
-    }
-    r = r1
-    g = g1
-    b = b1
-
-    // The Lottie JSON schema supports alpha values in theory, as the fourth value in this array.
-    // We intentionally do not support this, though, for consistency with Lottie on other platforms.
-    a = 1
-  }
-
-  // MARK: Public
-
-  public func encode(to encoder: Encoder) throws {
-    var container = encoder.unkeyedContainer()
-    try container.encode(r)
-    try container.encode(g)
-    try container.encode(b)
-    try container.encode(a)
-  }
-
-}
-
 // MARK: - LottieColor + AnyInitializable
 
 extension LottieColor: AnyInitializable {

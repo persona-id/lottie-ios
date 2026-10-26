@@ -8,7 +8,7 @@ import QuartzCore
 // MARK: - LottieAnimationLayer
 
 /// A CALayer subclass for rendering Lottie animations.
-///  - Also available as a SwiftUI view (`LottieView`) and a UIView subclass (`LottieAnimationView`)
+///  - Also available as a UIView subclass (`LottieAnimationView`)
 public class LottieAnimationLayer: CALayer {
 
   // MARK: Lifecycle
@@ -30,33 +30,7 @@ public class LottieAnimationLayer: CALayer {
     screenScale = 1
     self.logger = logger
     super.init()
-    makeAnimationLayer(usingEngine: configuration.renderingEngine)
-    if let animation {
-      frame = animation.bounds
-    }
-  }
-
-  /// Initializes an LottieAnimationLayer with a .lottie file.
-  public init(
-    dotLottie: DotLottieFile?,
-    animationId: String? = nil,
-    textProvider: AnimationKeypathTextProvider = DefaultTextProvider(),
-    fontProvider: AnimationFontProvider = DefaultFontProvider(),
-    configuration: LottieConfiguration = .shared,
-    logger: LottieLogger = .shared)
-  {
-    let dotLottieAnimation = dotLottie?.animation(for: animationId)
-    animation = dotLottieAnimation?.animation
-    imageProvider = dotLottie?.imageProvider ?? BundleImageProvider(bundle: Bundle.main, searchPath: nil)
-    self.textProvider = textProvider
-    self.fontProvider = fontProvider
-    self.configuration = configuration
-    screenScale = 1
-    self.logger = logger
-    super.init()
-    loopMode = dotLottieAnimation?.configuration.loopMode ?? .playOnce
-    animationSpeed = CGFloat(dotLottieAnimation?.configuration.speed ?? 1)
-    makeAnimationLayer(usingEngine: configuration.renderingEngine)
+    makeAnimationLayer()
     if let animation {
       frame = animation.bounds
     }
@@ -119,7 +93,7 @@ public class LottieAnimationLayer: CALayer {
       playFrom: CGFloat(animation.startFrame),
       playTo: CGFloat(animation.endFrame),
       closure: completion)
-    removeCurrentAnimationIfNecessary()
+    removeCurrentAnimation()
     addNewAnimationForContext(context)
   }
 
@@ -146,7 +120,7 @@ public class LottieAnimationLayer: CALayer {
       return
     }
 
-    removeCurrentAnimationIfNecessary()
+    removeCurrentAnimation()
     if let loopMode {
       /// Set the loop mode, if one was supplied
       self.loopMode = loopMode
@@ -179,7 +153,7 @@ public class LottieAnimationLayer: CALayer {
       return
     }
 
-    removeCurrentAnimationIfNecessary()
+    removeCurrentAnimation()
     if let loopMode {
       /// Set the loop mode, if one was supplied
       self.loopMode = loopMode
@@ -231,7 +205,7 @@ public class LottieAnimationLayer: CALayer {
       return
     }
 
-    removeCurrentAnimationIfNecessary()
+    removeCurrentAnimation()
     if let loopMode {
       /// Set the loop mode, if one was supplied
       self.loopMode = loopMode
@@ -488,16 +462,10 @@ public class LottieAnimationLayer: CALayer {
 
   /// A closure called when the animation layer has been loaded.
   /// Will inform the receiver the type of rendering engine that is used for the layer.
-  public var animationLayerDidLoad: ((_ animationLayer: LottieAnimationLayer, _ renderingEngine: RenderingEngineOption) -> Void)?
+  public var animationLayerDidLoad: ((_ animationLayer: LottieAnimationLayer) -> Void)?
 
   /// The configuration that this `LottieAnimationView` uses when playing its animation
-  public var configuration: LottieConfiguration {
-    didSet {
-      if configuration.renderingEngine != oldValue.renderingEngine {
-        makeAnimationLayer(usingEngine: configuration.renderingEngine)
-      }
-    }
-  }
+  public var configuration: LottieConfiguration
 
   /// The underlying CALayer created to display the content.
   /// Use this property to change CALayer props like the content's transform, anchor point, etc.
@@ -511,27 +479,18 @@ public class LottieAnimationLayer: CALayer {
 
   /// Describes the behavior of an AnimationView when the app is moved to the background.
   ///
-  /// The default for the Main Thread animation engine is `pause`,
-  /// which pauses the animation when the application moves to
-  /// the background. This prevents the animation from consuming CPU
-  /// resources when not on-screen. The completion block is called with
-  /// `false` for completed.
-  ///
-  /// The default for the Core Animation engine is `continuePlaying`,
-  /// since the Core Animation engine does not have any CPU overhead.
+  /// The default is `pauseAndRestore`, which pauses the animation when the application moves to
+  /// the background and restarts it in the foreground. This prevents the animation from consuming CPU
+  /// resources when not on-screen.
   public var backgroundBehavior: LottieBackgroundBehavior {
     get {
-      let currentBackgroundBehavior = _backgroundBehavior ?? .default(for: currentRenderingEngine ?? .mainThread)
+      let currentBackgroundBehavior = _backgroundBehavior ?? .default
 
-      if
-        currentRenderingEngine == .mainThread,
-        _backgroundBehavior == .continuePlaying
-      {
+      if _backgroundBehavior == .continuePlaying {
         logger.assertionFailure("""
           `LottieBackgroundBehavior.continuePlaying` should not be used with the Main Thread
           rendering engine, since this would waste CPU resources on playing an animation
-          that is not visible. Consider using a different background mode, or switching to
-          the Core Animation rendering engine (which does not have any CPU overhead).
+          that is not visible. Consider using a different background mode.
           """)
       }
 
@@ -547,7 +506,7 @@ public class LottieAnimationLayer: CALayer {
   /// be loaded up and set to the beginning of its timeline.
   public var animation: LottieAnimation? {
     didSet {
-      makeAnimationLayer(usingEngine: configuration.renderingEngine)
+      makeAnimationLayer()
 
       if let animation {
         animationLoaded?(self, animation)
@@ -560,28 +519,8 @@ public class LottieAnimationLayer: CALayer {
   ///
   /// When initializing a `LottieAnimationView`, the animation will either be loaded
   /// synchronously (when loading a `LottieAnimation` from a .json file on disk)
-  /// or asynchronously (when loading a `DotLottieFile` from disk, or downloading
-  /// an animation from a URL). This closure is called in both cases once the
-  /// animation is loaded and applied, so can be a useful way to configure this
-  /// `LottieAnimationView` regardless of which initializer was used. For example:
-  ///
-  /// ```
-  /// let animationView: LottieAnimationView
-  ///
-  /// if loadDotLottieFile {
-  ///   // Loads the .lottie file asynchronously
-  ///   animationView = LottieAnimationView(dotLottieName: "animation")
-  /// } else {
-  ///   // Loads the .json file synchronously
-  ///   animationView = LottieAnimationView(name: "animation")
-  /// }
-  ///
-  /// animationView.animationLoaded = { animationView, animation in
-  ///   // If using a .lottie file, this is called once the file finishes loading.
-  ///   // If using a .json file, this is called immediately (since the animation is loaded synchronously).
-  ///   animationView.play()
-  /// }
-  /// ```
+  /// or asynchronously (when downloading an animation from a URL). This closure is called
+  /// in both cases once the animation is loaded and applied.
   public var animationLoaded: ((_ animationLayer: LottieAnimationLayer, _ animation: LottieAnimation) -> Void)? {
     didSet {
       if let animation {
@@ -705,7 +644,7 @@ public class LottieAnimationLayer: CALayer {
   /// Note: Setting this will stop the current animation, if any.
   public var currentFrame: AnimationFrameTime {
     set {
-      removeCurrentAnimationIfNecessary()
+      removeCurrentAnimation()
       updateAnimationFrame(newValue)
       currentPlaybackMode = .paused(at: .frame(currentFrame))
     }
@@ -745,27 +684,6 @@ public class LottieAnimationLayer: CALayer {
     }
   }
 
-  /// The rendering engine currently being used by this layer.
-  ///  - This will only be `nil` in cases where the configuration is `automatic`
-  ///    but a `RootAnimationLayer` hasn't been constructed yet
-  public var currentRenderingEngine: RenderingEngine? {
-    switch configuration.renderingEngine {
-    case .specific(let engine):
-      return engine
-
-    case .automatic:
-      guard let animationLayer else {
-        return nil
-      }
-
-      if animationLayer is CoreAnimationLayer {
-        return .coreAnimation
-      } else {
-        return .mainThread
-      }
-    }
-  }
-
   /// Whether or not the Main Thread rendering engine should use `forceDisplayUpdate()`
   /// when rendering each individual frame.
   ///  - The main thread rendering engine implements optimizations to decrease the amount
@@ -779,40 +697,6 @@ public class LottieAnimationLayer: CALayer {
       (rootAnimationLayer as? MainThreadAnimationLayer)?.forceDisplayUpdateOnEachFrame
         = mainThreadRenderingEngineShouldForceDisplayUpdateOnEachFrame
     }
-  }
-
-  /// Sets the lottie file backing the animation layer. Setting this will clear the
-  /// layer's contents, completion blocks and current state. The new animation will
-  /// be loaded up and set to the beginning of its timeline.
-  /// The loopMode, animationSpeed and imageProvider will be set according
-  /// to lottie file settings
-  /// - Parameters:
-  ///   - animationId: Internal animation id to play. Optional
-  ///   Defaults to play first animation in file.
-  ///   - dotLottieFile: Lottie file to play
-  public func loadAnimation(
-    _ animationId: String? = nil,
-    from dotLottieFile: DotLottieFile)
-  {
-    guard let dotLottieAnimation = dotLottieFile.animation(for: animationId) else { return }
-    loadAnimation(dotLottieAnimation)
-  }
-
-  /// Sets the lottie file backing the animation layer. Setting this will clear the
-  /// layer's contents, completion blocks and current state. The new animation will
-  /// be loaded up and set to the beginning of its timeline.
-  /// The loopMode, animationSpeed and imageProvider will be set according
-  /// to lottie file settings
-  /// - Parameters:
-  ///   - atIndex: Internal animation index to play.
-  ///   Defaults to play first animation in file.
-  ///   - dotLottieFile: Lottie file to play
-  public func loadAnimation(
-    atIndex index: Int,
-    from dotLottieFile: DotLottieFile)
-  {
-    guard let dotLottieAnimation = dotLottieFile.animation(at: index) else { return }
-    loadAnimation(dotLottieAnimation)
   }
 
   /// Reloads the images supplied to the animation from the `imageProvider`
@@ -1103,17 +987,6 @@ public class LottieAnimationLayer: CALayer {
     }
   }
 
-  func loadAnimation(_ animationSource: LottieAnimationSource?) {
-    switch animationSource {
-    case .lottieAnimation(let animation):
-      self.animation = animation
-    case .dotLottieFile(let dotLottieFile):
-      loadAnimation(from: dotLottieFile)
-    case nil:
-      animation = nil
-    }
-  }
-
   // MARK: Fileprivate
 
   fileprivate var _activeAnimationName: String = LottieAnimationLayer.animationName
@@ -1137,7 +1010,7 @@ public class LottieAnimationLayer: CALayer {
     animationContext = nil
   }
 
-  fileprivate func makeAnimationLayer(usingEngine renderingEngine: RenderingEngineOption) {
+  fileprivate func makeAnimationLayer() {
     /// Disable the default implicit crossfade animation Core Animation creates
     /// when adding or removing sublayers.
     actions = ["sublayers": NSNull()]
@@ -1153,19 +1026,7 @@ public class LottieAnimationLayer: CALayer {
     guard let animation else {
       return
     }
-    let rootAnimationLayer: RootAnimationLayer? =
-      switch renderingEngine {
-      case .automatic:
-        makeAutomaticEngineLayer(for: animation)
-      case .specific(.coreAnimation):
-        makeCoreAnimationLayer(for: animation)
-      case .specific(.mainThread):
-        makeMainThreadAnimationLayer(for: animation)
-      }
-
-    guard let animationLayer = rootAnimationLayer else {
-      return
-    }
+    let animationLayer = makeMainThreadAnimationLayer(for: animation)
 
     animationLayer.lottieAnimationLayer = self
 
@@ -1173,7 +1034,7 @@ public class LottieAnimationLayer: CALayer {
       animationLayer.setValueProvider(valueProvider, keypath: keypath)
     }
 
-    animationLayerDidLoad?(self, renderingEngine)
+    animationLayerDidLoad?(self)
 
     animationLayer.renderScale = screenScale
 
@@ -1198,137 +1059,6 @@ public class LottieAnimationLayer: CALayer {
     return mainThreadAnimationLayer
   }
 
-  fileprivate func makeCoreAnimationLayer(for animation: LottieAnimation) -> CoreAnimationLayer? {
-    do {
-      let coreAnimationLayer = try CoreAnimationLayer(
-        animation: animation,
-        imageProvider: imageProvider.cachedImageProvider,
-        textProvider: textProvider,
-        fontProvider: fontProvider,
-        maskAnimationToBounds: maskAnimationToBounds,
-        compatibilityTrackerMode: .track,
-        logger: logger)
-
-      coreAnimationLayer.didSetUpAnimation = { [logger] compatibilityIssues in
-        logger.assert(
-          compatibilityIssues.isEmpty,
-          "Encountered Core Animation compatibility issues while setting up animation:\n"
-            + compatibilityIssues.map { $0.description }.joined(separator: "\n") + "\n\n"
-            + """
-              This animation cannot be rendered correctly by the Core Animation engine.
-              To resolve this issue, you can use `RenderingEngineOption.automatic`, which automatically falls back
-              to the Main Thread rendering engine when necessary, or just use `RenderingEngineOption.mainThread`.
-
-              """)
-      }
-
-      return coreAnimationLayer
-    } catch {
-      // This should never happen, because we initialize the `CoreAnimationLayer` with
-      // `CompatibilityTracker.Mode.track` (which reports errors in `didSetUpAnimation`,
-      // not by throwing).
-      logger.assertionFailure("Encountered unexpected error \(error)")
-      return nil
-    }
-  }
-
-  fileprivate func makeAutomaticEngineLayer(for animation: LottieAnimation) -> CoreAnimationLayer? {
-    do {
-      // Attempt to set up the Core Animation layer. This can either throw immediately in `init`,
-      // or throw an error later in `CALayer.display()` that will be reported in `didSetUpAnimation`.
-      let coreAnimationLayer = try CoreAnimationLayer(
-        animation: animation,
-        imageProvider: imageProvider.cachedImageProvider,
-        textProvider: textProvider,
-        fontProvider: fontProvider,
-        maskAnimationToBounds: maskAnimationToBounds,
-        compatibilityTrackerMode: .abort,
-        logger: logger)
-
-      coreAnimationLayer.didSetUpAnimation = { [weak self] issues in
-        self?.automaticEngineLayerDidSetUpAnimation(issues)
-      }
-
-      return coreAnimationLayer
-    } catch {
-      if case CompatibilityTracker.Error.encounteredCompatibilityIssue(let compatibilityIssue) = error {
-        automaticEngineLayerDidSetUpAnimation([compatibilityIssue])
-      } else {
-        // This should never happen, because we expect `CoreAnimationLayer` to only throw
-        // `CompatibilityTracker.Error.encounteredCompatibilityIssue` errors.
-        logger.assertionFailure("Encountered unexpected error \(error)")
-        automaticEngineLayerDidSetUpAnimation([])
-      }
-
-      return nil
-    }
-  }
-
-  /// Handles any compatibility issues with the Core Animation engine
-  /// by falling back to the Main Thread engine
-  fileprivate func automaticEngineLayerDidSetUpAnimation(_ compatibilityIssues: [CompatibilityIssue]) {
-    // If there weren't any compatibility issues, then there's nothing else to do
-    if compatibilityIssues.isEmpty {
-      return
-    }
-
-    logger.warn(
-      "Encountered Core Animation compatibility issue while setting up animation:\n"
-        + compatibilityIssues.map { $0.description }.joined(separator: "\n") + "\n"
-        + """
-          This animation may have additional compatibility issues, but animation setup was cancelled early to avoid wasted work.
-
-          Automatically falling back to Main Thread rendering engine. This fallback comes with some additional performance
-          overhead, which can be reduced by manually specifying that this animation should always use the Main Thread engine.
-
-          """)
-
-    let animationContext = animationContext
-    let currentFrame = currentFrame
-
-    // Disable the completion handler delegate before tearing down the `CoreAnimationLayer`
-    // and building the `MainThreadAnimationLayer`. Otherwise deinitializing the
-    // `CoreAnimationLayer` would trigger the animation completion handler even though
-    // the animation hasn't even started playing yet.
-    animationContext?.closure.ignoreDelegate = true
-
-    makeAnimationLayer(usingEngine: .mainThread)
-
-    // Set up the Main Thread animation layer using the same configuration that
-    // was being used by the previous Core Animation layer
-    self.currentFrame = currentFrame
-
-    if let animationContext {
-      // `AnimationContext.closure` (`AnimationCompletionDelegate`) is a reference type
-      // that is the animation layer's `CAAnimationDelegate`, and holds a reference to
-      // the animation layer. Reusing a single instance across different animation layers
-      // can cause the animation setup to fail, so we create a copy of the `animationContext`:
-      addNewAnimationForContext(AnimationContext(
-        playFrom: animationContext.playFrom,
-        playTo: animationContext.playTo,
-        closure: animationContext.closure.completionBlock))
-    }
-  }
-
-  /// Removes the current animation and pauses the animation at the current frame
-  /// if necessary before setting up a new animation.
-  ///  - This is not necessary with the Core Animation engine, and skipping
-  ///    this step lets us avoid building the animations twice (once paused
-  ///    and once again playing)
-  ///  - This method should only be called immediately before setting up another
-  ///    animation -- otherwise this LottieAnimationView could be put in an inconsistent state.
-  fileprivate func removeCurrentAnimationIfNecessary() {
-    switch currentRenderingEngine {
-    case .mainThread:
-      removeCurrentAnimation()
-    case .coreAnimation, nil:
-      // We still need to remove the `animationContext`, since it should only be present
-      // when an animation is actually playing. Without this calling `removeCurrentAnimationIfNecessary()`
-      // and then setting the animation to a specific paused frame would put this
-      // `LottieAnimationView` in an inconsistent state.
-      animationContext = nil
-    }
-  }
 
   /// Adds animation to animation layer and sets the delegate. If animation layer or animation are nil, exits.
   fileprivate func addNewAnimationForContext(_ animationContext: AnimationContext) {
@@ -1340,68 +1070,6 @@ public class LottieAnimationLayer: CALayer {
 
     animationID = animationID + 1
     _activeAnimationName = LottieAnimationLayer.animationName + String(animationID)
-
-    if let coreAnimationLayer = animationlayer as? CoreAnimationLayer {
-      var animationContext = animationContext
-
-      // Core Animation doesn't natively support negative speed values,
-      // so instead we can swap `playFrom` / `playTo`
-      if animationSpeed < 0 {
-        let temp = animationContext.playFrom
-        animationContext.playFrom = animationContext.playTo
-        animationContext.playTo = temp
-      }
-
-      var timingConfiguration = CoreAnimationLayer.CAMediaTimingConfiguration(
-        autoreverses: loopMode.caAnimationConfiguration.autoreverses,
-        repeatCount: loopMode.caAnimationConfiguration.repeatCount,
-        speed: abs(Float(animationSpeed)))
-
-      // The animation should start playing from the `currentFrame`,
-      // if `currentFrame` is included in the time range being played.
-      let lowerBoundTime = min(animationContext.playFrom, animationContext.playTo)
-      let upperBoundTime = max(animationContext.playFrom, animationContext.playTo)
-      if (lowerBoundTime ..< upperBoundTime).contains(round(currentFrame)) {
-        // We have to configure this differently depending on the loop mode:
-        switch loopMode {
-        // When playing exactly once (and not looping), we can just set the
-        // `playFrom` time to be the `currentFrame`. Since the animation duration
-        // is based on `playFrom` and `playTo`, this automatically truncates the
-        // duration (so the animation stops playing at `playFrom`).
-        //  - Don't do this if the animation is already at that frame
-        //    (e.g. playing from 100% to 0% when the animation is already at 0%)
-        //    since that would cause the animation to not play at all.
-        case .playOnce:
-          if animationContext.playTo != currentFrame {
-            animationContext.playFrom = currentFrame
-          }
-
-        // When looping, we specifically _don't_ want to affect the duration of the animation,
-        // since that would affect the duration of all subsequent loops. We just want to adjust
-        // the duration of the _first_ loop. Instead of setting `playFrom`, we just add a `timeOffset`
-        // so the first loop begins at `currentTime` but all subsequent loops are the standard duration.
-        default:
-          if animationSpeed < 0 {
-            timingConfiguration.timeOffset = animation.time(forFrame: animationContext.playFrom) - currentTime
-          } else {
-            timingConfiguration.timeOffset = currentTime - animation.time(forFrame: animationContext.playFrom)
-          }
-        }
-      }
-
-      // If attempting to play a zero-duration animation, just pause on that single frame instead
-      if animationContext.playFrom == animationContext.playTo {
-        currentFrame = animationContext.playTo
-        animationContext.closure.completionBlock?(true)
-        return
-      }
-
-      coreAnimationLayer.playAnimation(configuration: .init(
-        animationContext: animationContext,
-        timingConfiguration: timingConfiguration))
-
-      return
-    }
 
     /// At this point there is no animation on animationLayer and its state is set.
 
@@ -1471,17 +1139,6 @@ public class LottieAnimationLayer: CALayer {
     case .reducedMotion:
       animation?.reducedMotionMarker
     }
-  }
-
-  private func loadAnimation(_ dotLottieAnimation: DotLottieFile.Animation) {
-    loopMode = dotLottieAnimation.configuration.loopMode
-    animationSpeed = CGFloat(dotLottieAnimation.configuration.speed)
-
-    if let imageProvider = dotLottieAnimation.configuration.imageProvider {
-      self.imageProvider = imageProvider
-    }
-
-    animation = dotLottieAnimation.animation
   }
 
   /// Plays the marker that corresponds to the current "reduced motion" mode if present.

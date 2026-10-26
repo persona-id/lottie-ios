@@ -6,76 +6,10 @@
 //
 
 /// The animatable transform for a layer. Controls position, rotation, scale, and opacity.
-final class Transform: Codable, DictionaryInitializable {
+final class Transform: DictionaryInitializable {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    /// This manual override of decode is required because we want to throw an error
-    /// in the case that there is not position data.
-    let container = try decoder.container(keyedBy: Transform.CodingKeys.self)
-
-    // AnchorPoint
-    anchorPoint = try container
-      .decodeIfPresent(KeyframeGroup<LottieVector3D>.self, forKey: .anchorPoint) ??
-      KeyframeGroup(LottieVector3D(x: Double(0), y: 0, z: 0))
-
-    // Position
-    if container.contains(.positionX), container.contains(.positionY) {
-      // Position dimensions are split into two keyframe groups
-      positionX = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .positionX)
-      positionY = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .positionY)
-      position = nil
-    } else if let positionKeyframes = try? container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .position) {
-      // Position dimensions are a single keyframe group.
-      position = positionKeyframes
-      positionX = nil
-      positionY = nil
-    } else if
-      let positionContainer = try? container.nestedContainer(keyedBy: PositionCodingKeys.self, forKey: .position),
-      let positionX = try? positionContainer.decode(KeyframeGroup<LottieVector1D>.self, forKey: .positionX),
-      let positionY = try? positionContainer.decode(KeyframeGroup<LottieVector1D>.self, forKey: .positionY)
-    {
-      /// Position keyframes are split and nested.
-      self.positionX = positionX
-      self.positionY = positionY
-      position = nil
-    } else {
-      /// Default value.
-      position = KeyframeGroup(LottieVector3D(x: Double(0), y: 0, z: 0))
-      positionX = nil
-      positionY = nil
-    }
-
-    // Scale
-    scale = try container
-      .decodeIfPresent(KeyframeGroup<LottieVector3D>.self, forKey: .scale) ??
-      KeyframeGroup(LottieVector3D(x: Double(100), y: 100, z: 100))
-
-    // Rotation
-    if let rotation = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotationX) {
-      rotationX = rotation
-    } else {
-      rotationX = KeyframeGroup(LottieVector1D(0))
-    }
-
-    if let rotation = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotationY) {
-      rotationY = rotation
-    } else {
-      rotationY = KeyframeGroup(LottieVector1D(0))
-    }
-
-    if let rotation = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotationZ) {
-      rotationZ = rotation
-    } else {
-      rotationZ = try container
-        .decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .rotation) ?? KeyframeGroup(LottieVector1D(0))
-    }
-    rotation = nil
-    // Opacity
-    opacity = try container
-      .decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .opacity) ?? KeyframeGroup(LottieVector1D(100))
-  }
 
   init(dictionary: [String: Any]) throws {
     if
@@ -192,7 +126,7 @@ final class Transform: Codable, DictionaryInitializable {
 
   // MARK: Internal
 
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case anchorPoint = "a"
     case position = "p"
     case positionX = "px"
@@ -205,7 +139,7 @@ final class Transform: Codable, DictionaryInitializable {
     case opacity = "o"
   }
 
-  enum PositionCodingKeys: String, CodingKey {
+  enum PositionCodingKeys: String {
     case split = "s"
     case positionX = "x"
     case positionY = "y"

@@ -146,24 +146,14 @@ extension LottieAnimation {
   /// Loads a Lottie animation from a `Data` object containing a JSON animation.
   ///
   /// - Parameter data: The object to load the animation from.
-  /// - Parameter strategy: How the data should be decoded. Defaults to using the strategy set in `LottieConfiguration.shared`.
-  /// - Returns: Deserialized `LottieAnimation`. Optional.
+  /// - Returns: Deserialized `LottieAnimation`.
   ///
-  public static func from(
-    data: Data,
-    strategy: DecodingStrategy = LottieConfiguration.shared.decodingStrategy)
-    throws -> LottieAnimation
-  {
-    switch strategy {
-    case .legacyCodable:
-      return try JSONDecoder().decode(LottieAnimation.self, from: data)
-    case .dictionaryBased:
-      let json = try JSONSerialization.jsonObject(with: data)
-      guard let dict = json as? [String: Any] else {
-        throw InitializableError.invalidInput()
-      }
-      return try LottieAnimation(dictionary: dict)
+  public static func from(data: Data) throws -> LottieAnimation {
+    let json = try JSONSerialization.jsonObject(with: data)
+    guard let dict = json as? [String: Any] else {
+      throw InitializableError.invalidInput()
     }
+    return try LottieAnimation(dictionary: dict)
   }
 
   /// Loads a Lottie animation asynchronously from the URL.

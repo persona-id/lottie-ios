@@ -7,7 +7,7 @@
 
 // MARK: - MaskMode
 
-enum MaskMode: String, Codable {
+enum MaskMode: String {
   case add = "a"
   case subtract = "s"
   case intersect = "i"
@@ -19,20 +19,10 @@ enum MaskMode: String, Codable {
 
 // MARK: - Mask
 
-final class Mask: Codable, DictionaryInitializable {
+final class Mask: DictionaryInitializable {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Mask.CodingKeys.self)
-    mode = try container.decodeIfPresent(MaskMode.self, forKey: .mode) ?? .add
-    opacity = try container
-      .decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .opacity) ?? KeyframeGroup(LottieVector1D(100))
-    shape = try container.decode(KeyframeGroup<BezierPath>.self, forKey: .shape)
-    inverted = try container.decodeIfPresent(Bool.self, forKey: .inverted) ?? false
-    expansion = try container
-      .decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .expansion) ?? KeyframeGroup(LottieVector1D(0))
-  }
 
   init(dictionary: [String: Any]) throws {
     if
@@ -60,7 +50,7 @@ final class Mask: Codable, DictionaryInitializable {
 
   // MARK: Internal
 
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case mode
     case opacity = "o"
     case inverted = "inv"

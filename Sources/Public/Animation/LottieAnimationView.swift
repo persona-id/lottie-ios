@@ -19,35 +19,22 @@ public enum LottieBackgroundBehavior {
 
   /// Pause the animation and restart it when the application moves to the foreground.
   /// The completion block is stored and called when the animation completes.
-  ///  - This is the default when using the Main Thread rendering engine.
+  ///  - This is the default.
   case pauseAndRestore
 
   /// Stops the animation and sets it to the end of its current play time. The completion block is called.
   case forceFinish
 
   /// The animation continues playing in the background.
-  ///  - This is the default when using the Core Animation rendering engine.
-  ///    Playing an animation using the Core Animation engine doesn't come with any CPU overhead,
-  ///    so using `.continuePlaying` avoids the need to stop and then resume the animation
-  ///    (which does come with some CPU overhead).
-  ///  - This mode should not be used with the Main Thread rendering engine.
+  ///  - This mode should not be used with the Main Thread rendering engine, since it wastes CPU.
   case continuePlaying
 
   // MARK: Public
 
-  /// The default background behavior, based on the rendering engine being used to play the animation.
+  /// The default background behavior.
   ///  - Playing an animation using the Main Thread rendering engine comes with CPU overhead,
   ///    so the animation should be paused or stopped when the `LottieAnimationView` is not visible.
-  ///  - Playing an animation using the Core Animation rendering engine does not come with any
-  ///    CPU overhead, so these animations do not need to be paused in the background.
-  public static func `default`(for renderingEngine: RenderingEngine) -> LottieBackgroundBehavior {
-    switch renderingEngine {
-    case .mainThread:
-      .pauseAndRestore
-    case .coreAnimation:
-      .continuePlaying
-    }
-  }
+  public static var `default`: LottieBackgroundBehavior { .pauseAndRestore }
 }
 
 // MARK: - LottieLoopMode
@@ -87,7 +74,7 @@ extension LottieLoopMode: Equatable {
 // MARK: - LottieAnimationView
 
 /// A UIView subclass for rendering Lottie animations.
-///  - Also available as a SwiftUI view (`LottieView`) and a CALayer subclass (`LottieAnimationLayer`)
+///  - Also available as a CALayer subclass (`LottieAnimationLayer`)
 @IBDesignable
 open class LottieAnimationView: LottieAnimationViewBase {
 
@@ -107,30 +94,6 @@ open class LottieAnimationView: LottieAnimationViewBase {
     lottieAnimationLayer = LottieAnimationLayer(
       animation: animation,
       imageProvider: imageProvider,
-      textProvider: textProvider,
-      fontProvider: fontProvider,
-      configuration: configuration,
-      logger: logger)
-    self.logger = logger
-    super.init(frame: .zero)
-    commonInit()
-    if let animation {
-      frame = animation.bounds
-    }
-  }
-
-  /// Initializes an AnimationView with a .lottie file.
-  public init(
-    dotLottie: DotLottieFile?,
-    animationId: String? = nil,
-    textProvider: AnimationKeypathTextProvider = DefaultTextProvider(),
-    fontProvider: AnimationFontProvider = DefaultFontProvider(),
-    configuration: LottieConfiguration = .shared,
-    logger: LottieLogger = .shared)
-  {
-    lottieAnimationLayer = LottieAnimationLayer(
-      dotLottie: dotLottie,
-      animationId: animationId,
       textProvider: textProvider,
       fontProvider: fontProvider,
       configuration: configuration,
@@ -177,43 +140,6 @@ open class LottieAnimationView: LottieAnimationViewBase {
     logger = .shared
     super.init(coder: aDecoder)
     commonInit()
-  }
-
-  convenience init(
-    animationSource: LottieAnimationSource?,
-    imageProvider: AnimationImageProvider? = nil,
-    textProvider: AnimationKeypathTextProvider = DefaultTextProvider(),
-    fontProvider: AnimationFontProvider = DefaultFontProvider(),
-    configuration: LottieConfiguration = .shared,
-    logger: LottieLogger = .shared)
-  {
-    switch animationSource {
-    case .lottieAnimation(let animation):
-      self.init(
-        animation: animation,
-        imageProvider: imageProvider,
-        textProvider: textProvider,
-        fontProvider: fontProvider,
-        configuration: configuration,
-        logger: logger)
-
-    case .dotLottieFile(let dotLottieFile):
-      self.init(
-        dotLottie: dotLottieFile,
-        textProvider: textProvider,
-        fontProvider: fontProvider,
-        configuration: configuration,
-        logger: logger)
-
-    case nil:
-      self.init(
-        animation: nil,
-        imageProvider: imageProvider,
-        textProvider: textProvider,
-        fontProvider: fontProvider,
-        configuration: configuration,
-        logger: logger)
-    }
   }
 
   // MARK: Open
@@ -580,13 +506,6 @@ open class LottieAnimationView: LottieAnimationViewBase {
     return .zero
   }
 
-  /// The rendering engine currently being used by this view.
-  ///  - This will only be `nil` in cases where the configuration is `automatic`
-  ///    but a `RootAnimationLayer` hasn't been constructed yet
-  public var currentRenderingEngine: RenderingEngine? {
-    lottieAnimationLayer.currentRenderingEngine
-  }
-
   /// The current `LottiePlaybackMode` that is being used
   public var currentPlaybackMode: LottiePlaybackMode? {
     lottieAnimationLayer.currentPlaybackMode
@@ -603,38 +522,6 @@ open class LottieAnimationView: LottieAnimationViewBase {
   public var mainThreadRenderingEngineShouldForceDisplayUpdateOnEachFrame: Bool {
     get { lottieAnimationLayer.mainThreadRenderingEngineShouldForceDisplayUpdateOnEachFrame }
     set { lottieAnimationLayer.mainThreadRenderingEngineShouldForceDisplayUpdateOnEachFrame = newValue }
-  }
-
-  /// Sets the lottie file backing the animation view. Setting this will clear the
-  /// view's contents, completion blocks and current state. The new animation will
-  /// be loaded up and set to the beginning of its timeline.
-  /// The loopMode, animationSpeed and imageProvider will be set according
-  /// to lottie file settings
-  /// - Parameters:
-  ///   - animationId: Internal animation id to play. Optional
-  ///   Defaults to play first animation in file.
-  ///   - dotLottieFile: Lottie file to play
-  public func loadAnimation(
-    _ animationId: String? = nil,
-    from dotLottieFile: DotLottieFile)
-  {
-    lottieAnimationLayer.loadAnimation(animationId, from: dotLottieFile)
-  }
-
-  /// Sets the lottie file backing the animation view. Setting this will clear the
-  /// view's contents, completion blocks and current state. The new animation will
-  /// be loaded up and set to the beginning of its timeline.
-  /// The loopMode, animationSpeed and imageProvider will be set according
-  /// to lottie file settings
-  /// - Parameters:
-  ///   - atIndex: Internal animation index to play. Optional
-  ///   Defaults to play first animation in file.
-  ///   - dotLottieFile: Lottie file to play
-  public func loadAnimation(
-    atIndex index: Int,
-    from dotLottieFile: DotLottieFile)
-  {
-    lottieAnimationLayer.loadAnimation(atIndex: index, from: dotLottieFile)
   }
 
   /// Reloads the images supplied to the animation from the `imageProvider`
@@ -840,7 +727,7 @@ open class LottieAnimationView: LottieAnimationViewBase {
       setNeedsLayout()
     }
 
-    lottieAnimationLayer.animationLayerDidLoad = { [weak self] _, _ in
+    lottieAnimationLayer.animationLayerDidLoad = { [weak self] _ in
       guard let self else { return }
       invalidateIntrinsicContentSize()
       setNeedsLayout()
@@ -1026,10 +913,6 @@ open class LottieAnimationView: LottieAnimationViewBase {
 
   func updateInFlightAnimation() {
     lottieAnimationLayer.updateInFlightAnimation()
-  }
-
-  func loadAnimation(_ animationSource: LottieAnimationSource?) {
-    lottieAnimationLayer.loadAnimation(animationSource)
   }
 
   // MARK: Fileprivate

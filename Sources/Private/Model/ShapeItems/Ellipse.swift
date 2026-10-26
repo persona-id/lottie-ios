@@ -7,7 +7,7 @@
 
 // MARK: - PathDirection
 
-enum PathDirection: Int, Codable {
+enum PathDirection: Int {
   case clockwise = 1
   case userSetClockwise = 2
   case counterClockwise = 3
@@ -19,13 +19,6 @@ final class Ellipse: ShapeItem {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Ellipse.CodingKeys.self)
-    direction = try container.decodeIfPresent(PathDirection.self, forKey: .direction) ?? .clockwise
-    position = try container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .position)
-    size = try container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .size)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     if
@@ -54,17 +47,10 @@ final class Ellipse: ShapeItem {
   /// The size of the ellipse
   let size: KeyframeGroup<LottieVector3D>
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(direction, forKey: .direction)
-    try container.encode(position, forKey: .position)
-    try container.encode(size, forKey: .size)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case direction = "d"
     case position = "p"
     case size = "s"

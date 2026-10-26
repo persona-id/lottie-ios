@@ -7,7 +7,7 @@
 
 // MARK: - LineCap
 
-enum LineCap: Int, Codable, Sendable {
+enum LineCap: Int, Sendable {
   case none
   case butt
   case round
@@ -16,7 +16,7 @@ enum LineCap: Int, Codable, Sendable {
 
 // MARK: - LineJoin
 
-enum LineJoin: Int, Codable, Sendable {
+enum LineJoin: Int, Sendable {
   case none
   case miter
   case round
@@ -29,25 +29,6 @@ final class GradientStroke: ShapeItem {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: GradientStroke.CodingKeys.self)
-    opacity = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .opacity)
-    startPoint = try container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .startPoint)
-    endPoint = try container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .endPoint)
-    gradientType = try container.decode(GradientType.self, forKey: .gradientType)
-    highlightLength = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .highlightLength)
-    highlightAngle = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .highlightAngle)
-    width = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .width)
-    lineCap = try container.decodeIfPresent(LineCap.self, forKey: .lineCap) ?? .round
-    lineJoin = try container.decodeIfPresent(LineJoin.self, forKey: .lineJoin) ?? .round
-    miterLimit = try container.decodeIfPresent(Double.self, forKey: .miterLimit) ?? 4
-    // TODO Decode Color Objects instead of array.
-    let colorsContainer = try container.nestedContainer(keyedBy: GradientDataKeys.self, forKey: .colors)
-    colors = try colorsContainer.decode(KeyframeGroup<[Double]>.self, forKey: .colors)
-    numberOfColors = try colorsContainer.decode(Int.self, forKey: .numberOfColors)
-    dashPattern = try container.decodeIfPresent([DashElement].self, forKey: .dashPattern)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     let opacityDictionary: [String: Any] = try dictionary.value(for: CodingKeys.opacity)
@@ -193,28 +174,10 @@ final class GradientStroke: ShapeItem {
       dashPattern: dashPattern)
   }
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(opacity, forKey: .opacity)
-    try container.encode(startPoint, forKey: .startPoint)
-    try container.encode(endPoint, forKey: .endPoint)
-    try container.encode(gradientType, forKey: .gradientType)
-    try container.encodeIfPresent(highlightLength, forKey: .highlightLength)
-    try container.encodeIfPresent(highlightAngle, forKey: .highlightAngle)
-    try container.encode(width, forKey: .width)
-    try container.encode(lineCap, forKey: .lineCap)
-    try container.encode(lineJoin, forKey: .lineJoin)
-    try container.encode(miterLimit, forKey: .miterLimit)
-    var colorsContainer = container.nestedContainer(keyedBy: GradientDataKeys.self, forKey: .colors)
-    try colorsContainer.encode(numberOfColors, forKey: .numberOfColors)
-    try colorsContainer.encode(colors, forKey: .colors)
-    try container.encodeIfPresent(dashPattern, forKey: .dashPattern)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case opacity = "o"
     case startPoint = "s"
     case endPoint = "e"
@@ -229,7 +192,7 @@ final class GradientStroke: ShapeItem {
     case dashPattern = "d"
   }
 
-  private enum GradientDataKeys: String, CodingKey {
+  private enum GradientDataKeys: String {
     case numberOfColors = "p"
     case colors = "k"
   }

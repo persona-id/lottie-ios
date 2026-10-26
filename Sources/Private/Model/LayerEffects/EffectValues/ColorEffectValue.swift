@@ -5,15 +5,13 @@ final class ColorEffectValue: EffectValue {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-    value = try? container.decode(KeyframeGroup<LottieColor>.self, forKey: .value)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
-    let valueDictionary: [String: Any] = try dictionary.value(for: CodingKeys.value)
-    value = try KeyframeGroup<LottieColor>(dictionary: valueDictionary)
+    if let valueDictionary = dictionary[CodingKeys.value.rawValue] as? [String: Any] {
+      value = try? KeyframeGroup<LottieColor>(dictionary: valueDictionary)
+    } else {
+      value = nil
+    }
     try super.init(dictionary: dictionary)
   }
 
@@ -22,15 +20,10 @@ final class ColorEffectValue: EffectValue {
   /// The value of the color
   let value: KeyframeGroup<LottieColor>?
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(value, forKey: .value)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case value = "v"
   }
 }

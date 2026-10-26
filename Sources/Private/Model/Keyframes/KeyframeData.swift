@@ -38,7 +38,7 @@ final class KeyframeData<T> {
 
   // MARK: Internal
 
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case startValue = "s"
     case endValue = "e"
     case time = "t"
@@ -75,14 +75,6 @@ final class KeyframeData<T> {
     return false
   }
 }
-
-// MARK: Encodable
-
-extension KeyframeData: Encodable where T: Encodable { }
-
-// MARK: Decodable
-
-extension KeyframeData: Decodable where T: Decodable { }
 
 // MARK: DictionaryInitializable
 

@@ -7,7 +7,7 @@
 
 // MARK: - StarType
 
-enum StarType: Int, Codable, Sendable {
+enum StarType: Int, Sendable {
   case none
   case star
   case polygon
@@ -19,19 +19,6 @@ final class Star: ShapeItem {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Star.CodingKeys.self)
-    direction = try container.decodeIfPresent(PathDirection.self, forKey: .direction) ?? .clockwise
-    position = try container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .position)
-    outerRadius = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .outerRadius)
-    outerRoundness = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .outerRoundness)
-    innerRadius = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .innerRadius)
-    innerRoundness = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .innerRoundness)
-    rotation = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .rotation)
-    points = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .points)
-    starType = try container.decode(StarType.self, forKey: .starType)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     if
@@ -99,23 +86,10 @@ final class Star: ShapeItem {
   /// The type of star
   let starType: StarType
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(direction, forKey: .direction)
-    try container.encode(position, forKey: .position)
-    try container.encode(outerRadius, forKey: .outerRadius)
-    try container.encode(outerRoundness, forKey: .outerRoundness)
-    try container.encode(innerRadius, forKey: .innerRadius)
-    try container.encode(innerRoundness, forKey: .innerRoundness)
-    try container.encode(rotation, forKey: .rotation)
-    try container.encode(points, forKey: .points)
-    try container.encode(starType, forKey: .starType)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case direction = "d"
     case position = "p"
     case outerRadius = "or"

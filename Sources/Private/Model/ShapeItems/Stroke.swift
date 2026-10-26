@@ -9,17 +9,6 @@ final class Stroke: ShapeItem {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Stroke.CodingKeys.self)
-    opacity = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .opacity)
-    color = try container.decode(KeyframeGroup<LottieColor>.self, forKey: .color)
-    width = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .width)
-    lineCap = try container.decodeIfPresent(LineCap.self, forKey: .lineCap) ?? .round
-    lineJoin = try container.decodeIfPresent(LineJoin.self, forKey: .lineJoin) ?? .round
-    miterLimit = try container.decodeIfPresent(Double.self, forKey: .miterLimit) ?? 4
-    dashPattern = try container.decodeIfPresent([DashElement].self, forKey: .dashPattern)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     let opacityDictionary: [String: Any] = try dictionary.value(for: CodingKeys.opacity)
@@ -108,21 +97,10 @@ final class Stroke: ShapeItem {
       dashPattern: dashPattern)
   }
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(opacity, forKey: .opacity)
-    try container.encode(color, forKey: .color)
-    try container.encode(width, forKey: .width)
-    try container.encode(lineCap, forKey: .lineCap)
-    try container.encode(lineJoin, forKey: .lineJoin)
-    try container.encode(miterLimit, forKey: .miterLimit)
-    try container.encodeIfPresent(dashPattern, forKey: .dashPattern)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case opacity = "o"
     case color = "c"
     case width = "w"

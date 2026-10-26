@@ -7,7 +7,7 @@
 
 // MARK: - Font
 
-final class Font: Codable, Sendable, DictionaryInitializable {
+final class Font: Sendable, DictionaryInitializable {
 
   // MARK: Lifecycle
 
@@ -27,7 +27,7 @@ final class Font: Codable, Sendable, DictionaryInitializable {
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case name = "fName"
     case familyName = "fFamily"
     case style = "fStyle"
@@ -39,7 +39,7 @@ final class Font: Codable, Sendable, DictionaryInitializable {
 // MARK: - FontList
 
 /// A list of fonts
-final class FontList: Codable, Sendable, DictionaryInitializable {
+final class FontList: Sendable, DictionaryInitializable {
 
   // MARK: Lifecycle
 
@@ -50,7 +50,7 @@ final class FontList: Codable, Sendable, DictionaryInitializable {
 
   // MARK: Internal
 
-  enum CodingKeys: String, CodingKey {
+  enum CodingKeys: String {
     case fonts = "list"
   }
 

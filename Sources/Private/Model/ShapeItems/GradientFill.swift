@@ -7,7 +7,7 @@
 
 // MARK: - GradientType
 
-enum GradientType: Int, Codable, Sendable {
+enum GradientType: Int, Sendable {
   case none
   case linear
   case radial
@@ -19,20 +19,6 @@ final class GradientFill: ShapeItem {
 
   // MARK: Lifecycle
 
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: GradientFill.CodingKeys.self)
-    opacity = try container.decode(KeyframeGroup<LottieVector1D>.self, forKey: .opacity)
-    startPoint = try container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .startPoint)
-    endPoint = try container.decode(KeyframeGroup<LottieVector3D>.self, forKey: .endPoint)
-    gradientType = try container.decode(GradientType.self, forKey: .gradientType)
-    highlightLength = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .highlightLength)
-    highlightAngle = try container.decodeIfPresent(KeyframeGroup<LottieVector1D>.self, forKey: .highlightAngle)
-    fillRule = try container.decodeIfPresent(FillRule.self, forKey: .fillRule) ?? .nonZeroWinding
-    let colorsContainer = try container.nestedContainer(keyedBy: GradientDataKeys.self, forKey: .colors)
-    colors = try colorsContainer.decode(KeyframeGroup<[Double]>.self, forKey: .colors)
-    numberOfColors = try colorsContainer.decode(Int.self, forKey: .numberOfColors)
-    try super.init(from: decoder)
-  }
 
   required init(dictionary: [String: Any]) throws {
     let opacityDictionary: [String: Any] = try dictionary.value(for: CodingKeys.opacity)
@@ -100,24 +86,10 @@ final class GradientFill: ShapeItem {
   /// The fill rule to use when filling a path
   let fillRule: FillRule
 
-  override func encode(to encoder: Encoder) throws {
-    try super.encode(to: encoder)
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(opacity, forKey: .opacity)
-    try container.encode(startPoint, forKey: .startPoint)
-    try container.encode(endPoint, forKey: .endPoint)
-    try container.encode(gradientType, forKey: .gradientType)
-    try container.encodeIfPresent(highlightLength, forKey: .highlightLength)
-    try container.encodeIfPresent(highlightAngle, forKey: .highlightAngle)
-    try container.encodeIfPresent(fillRule, forKey: .fillRule)
-    var colorsContainer = container.nestedContainer(keyedBy: GradientDataKeys.self, forKey: .colors)
-    try colorsContainer.encode(numberOfColors, forKey: .numberOfColors)
-    try colorsContainer.encode(colors, forKey: .colors)
-  }
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case opacity = "o"
     case startPoint = "s"
     case endPoint = "e"
@@ -128,7 +100,7 @@ final class GradientFill: ShapeItem {
     case fillRule = "r"
   }
 
-  private enum GradientDataKeys: String, CodingKey {
+  private enum GradientDataKeys: String {
     case numberOfColors = "p"
     case colors = "k"
   }

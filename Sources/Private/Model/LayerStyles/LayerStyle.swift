@@ -3,42 +3,16 @@
 
 // MARK: - LayerStyleType
 
-enum LayerStyleType: Int, Codable, Sendable {
+enum LayerStyleType: Int, Sendable {
   case dropShadow = 1
   case unknown = 9999
-
-  init(from decoder: Decoder) throws {
-    self = try LayerStyleType(rawValue: decoder.singleValueContainer().decode(RawValue.self)) ?? .unknown
-  }
-}
-
-// MARK: ClassFamily
-
-extension LayerStyleType: ClassFamily {
-  static var discriminator: Discriminator = .type
-
-  func getType() -> AnyObject.Type {
-    switch self {
-    case .dropShadow:
-      DropShadowStyle.self
-    case .unknown:
-      // Unsupported
-      LayerStyle.self
-    }
-  }
 }
 
 // MARK: - LayerStyle
 
-class LayerStyle: Codable, DictionaryInitializable {
+class LayerStyle: DictionaryInitializable {
 
   // MARK: Lifecycle
-
-  required init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: LayerStyle.CodingKeys.self)
-    name = try container.decodeIfPresent(String.self, forKey: .name) ?? "Style"
-    type = try container.decode(LayerStyleType.self, forKey: .type)
-  }
 
   required init(dictionary: [String: Any]) throws {
     name = (try? dictionary.value(for: CodingKeys.name)) ?? "Layer"
@@ -55,7 +29,7 @@ class LayerStyle: Codable, DictionaryInitializable {
 
   // MARK: Fileprivate
 
-  fileprivate enum CodingKeys: String, CodingKey {
+  fileprivate enum CodingKeys: String {
     case name = "nm"
     case type = "ty"
   }

@@ -9,29 +9,9 @@ import CoreGraphics
 import Foundation
 import QuartzCore
 
-// MARK: - LottieVector1D + Codable
+// MARK: - LottieVector1D
 
-/// Single value container. Needed because lottie sometimes wraps a Double in an array.
-extension LottieVector1D: Codable {
-
-  // MARK: Lifecycle
-
-  public init(from decoder: Decoder) throws {
-    /// Try to decode an array of doubles
-    do {
-      var container = try decoder.unkeyedContainer()
-      value = try container.decode(Double.self)
-    } catch {
-      value = try decoder.singleValueContainer().decode(Double.self)
-    }
-  }
-
-  // MARK: Public
-
-  public func encode(to encoder: Encoder) throws {
-    var container = encoder.singleValueContainer()
-    try container.encode(value)
-  }
+extension LottieVector1D {
 
   // MARK: Internal
 
@@ -69,39 +49,13 @@ extension Double {
 // MARK: - LottieVector2D
 
 /// Needed for decoding json {x: y:} to a CGPoint
-public struct LottieVector2D: Codable, Hashable, Sendable {
+public struct LottieVector2D: Hashable, Sendable {
 
   // MARK: Lifecycle
 
   init(x: Double, y: Double) {
     self.x = x
     self.y = y
-  }
-
-  public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: LottieVector2D.CodingKeys.self)
-
-    do {
-      let xValue: [Double] = try container.decode([Double].self, forKey: .x)
-      x = xValue[0]
-    } catch {
-      x = try container.decode(Double.self, forKey: .x)
-    }
-
-    do {
-      let yValue: [Double] = try container.decode([Double].self, forKey: .y)
-      y = yValue[0]
-    } catch {
-      y = try container.decode(Double.self, forKey: .y)
-    }
-  }
-
-  // MARK: Public
-
-  public func encode(to encoder: Encoder) throws {
-    var container = encoder.container(keyedBy: LottieVector2D.CodingKeys.self)
-    try container.encode(x, forKey: .x)
-    try container.encode(y, forKey: .y)
   }
 
   // MARK: Internal
@@ -115,7 +69,7 @@ public struct LottieVector2D: Codable, Hashable, Sendable {
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case x
     case y
   }
@@ -159,12 +113,12 @@ extension CGPoint {
   }
 }
 
-// MARK: - LottieVector3D + Codable
+// MARK: - LottieVector3D
 
 /// A three dimensional vector.
-/// These vectors are encoded and decoded from [Double]
+/// These vectors are decoded from [Double]
 
-extension LottieVector3D: Codable {
+extension LottieVector3D {
 
   // MARK: Lifecycle
 
@@ -172,37 +126,6 @@ extension LottieVector3D: Codable {
     self.x = Double(x)
     self.y = Double(y)
     self.z = Double(z)
-  }
-
-  public init(from decoder: Decoder) throws {
-    var container = try decoder.unkeyedContainer()
-
-    if !container.isAtEnd {
-      x = try container.decode(Double.self)
-    } else {
-      x = 0
-    }
-
-    if !container.isAtEnd {
-      y = try container.decode(Double.self)
-    } else {
-      y = 0
-    }
-
-    if !container.isAtEnd {
-      z = try container.decode(Double.self)
-    } else {
-      z = 0
-    }
-  }
-
-  // MARK: Public
-
-  public func encode(to encoder: Encoder) throws {
-    var container = encoder.unkeyedContainer()
-    try container.encode(x)
-    try container.encode(y)
-    try container.encode(z)
   }
 
 }

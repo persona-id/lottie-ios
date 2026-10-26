@@ -7,18 +7,10 @@
 
 // MARK: - Asset
 
-public class Asset: Codable, DictionaryInitializable {
+public class Asset: DictionaryInitializable {
 
   // MARK: Lifecycle
 
-  required public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Asset.CodingKeys.self)
-    if let id = try? container.decode(String.self, forKey: .id) {
-      self.id = id
-    } else {
-      id = String(try container.decode(Int.self, forKey: .id))
-    }
-  }
 
   required init(dictionary: [String: Any]) throws {
     if let id = dictionary[CodingKeys.id.rawValue] as? String {
@@ -37,7 +29,7 @@ public class Asset: Codable, DictionaryInitializable {
 
   // MARK: Private
 
-  private enum CodingKeys: String, CodingKey {
+  private enum CodingKeys: String {
     case id
   }
 }
