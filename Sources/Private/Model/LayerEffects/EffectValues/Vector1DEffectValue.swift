@@ -7,8 +7,11 @@ final class Vector1DEffectValue: EffectValue {
 
 
   required init(dictionary: [String: Any]) throws {
-    let valueDictionary: [String: Any] = try dictionary.value(for: CodingKeys.value)
-    value = try KeyframeGroup<LottieVector1D>(dictionary: valueDictionary)
+    if let valueDictionary = dictionary[CodingKeys.value.rawValue] as? [String: Any] {
+      value = try? KeyframeGroup<LottieVector1D>(dictionary: valueDictionary)
+    } else {
+      value = nil
+    }
     try super.init(dictionary: dictionary)
   }
 

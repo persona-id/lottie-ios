@@ -18,9 +18,10 @@ final class AssetLibrary: AnyInitializable, Sendable {
     var precompAssets = [String : PrecompAsset]()
     for dictionary in dictionaries {
       if dictionary[PrecompAsset.CodingKeys.layers.rawValue] != nil {
-        let asset = try PrecompAsset(dictionary: dictionary)
-        decodedAssets[asset.id] = asset
-        precompAssets[asset.id] = asset
+        if let asset = try? PrecompAsset(dictionary: dictionary) {
+          decodedAssets[asset.id] = asset
+          precompAssets[asset.id] = asset
+        }
       } else if let asset = try? ImageAsset(dictionary: dictionary) {
         decodedAssets[asset.id] = asset
         imageAssets[asset.id] = asset

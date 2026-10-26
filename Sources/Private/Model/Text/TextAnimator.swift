@@ -94,21 +94,21 @@ final class TextAnimator: DictionaryInitializable {
       opacity = nil
     }
 
-    let selectorDictionary: [String: Any] = try dictionary.value(for: CodingKeys.textSelector)
+    let selectorDictionary = dictionary[CodingKeys.textSelector.rawValue] as? [String: Any]
 
-    if let startDictionary = selectorDictionary[TextSelectorKeys.start.rawValue] as? [String: Any] {
-      start = try KeyframeGroup<LottieVector1D>(dictionary: startDictionary)
+    if let startDictionary = selectorDictionary?[TextSelectorKeys.start.rawValue] as? [String: Any] {
+      start = try? KeyframeGroup<LottieVector1D>(dictionary: startDictionary)
     } else {
       start = nil
     }
 
-    if let endDictionary = selectorDictionary[TextSelectorKeys.end.rawValue] as? [String: Any] {
-      end = try KeyframeGroup<LottieVector1D>(dictionary: endDictionary)
+    if let endDictionary = selectorDictionary?[TextSelectorKeys.end.rawValue] as? [String: Any] {
+      end = try? KeyframeGroup<LottieVector1D>(dictionary: endDictionary)
     } else {
       end = nil
     }
 
-    if let textRangeUnitValue = selectorDictionary[TextSelectorKeys.textRangeUnits.rawValue] as? Int {
+    if let textRangeUnitValue = selectorDictionary?[TextSelectorKeys.textRangeUnits.rawValue] as? Int {
       textRangeUnit = TextRangeUnit(rawValue: textRangeUnitValue)
     } else {
       textRangeUnit = nil
